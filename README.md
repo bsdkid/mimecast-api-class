@@ -1,6 +1,11 @@
 # Mimecast API
 
-Provides a simple, basic class to the Mimecast API.  Currently supports only a few methods which were immediately required to do what I needed but will be extended over time.
+Provides a simple, basic class to the Mimecast API. Currently supports only a few methods which were immediately required to do what I needed but will be extended over time.
+
+I wrote this because the only example I could find was a single monolithic script which used httplib and I wanted something a little cleaner and more extensible.
+
+### Requirements
+The class file pretty much needs only the python **requests** module to function.  Everything else uses base python functions.
 
 ### Mimecast.py
 Class file with a few simple methods.
