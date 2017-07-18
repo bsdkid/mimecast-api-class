@@ -1,37 +1,30 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
+import os
 import sys
-from Mimecast import Mimecast
+import Mimecast
+import logging
+from pprint import pprint
+import time
 
-APP_ID = ''
-APP_KEY = ''
 USER = ''
 PASS = ''
-AUTH_TYPE = "Basic-Cloud" 
+APP_ID = ''
+APP_KEY = ''
 
-mc = Mimecast(USER, PASS, APP_ID, APP_KEY, AUTH_TYPE)
+mc = Mimecast.Mimecast(USER, PASS, APP_ID, APP_KEY)
+messagesInHoldQueue =  mc.getRollingHoldList(poll_minutes = 1)
 
-try:
-	messagesInHoldQueue = mc.getHoldList(3)
-	if len(messagesInHoldQueue["data"][0]["id"]) > 0:
-		events = messagesInHoldQueue["data"]
-		for event in events:
-			if event['hasAttachments'] is True:
-				IGNORED_REASON_IDS = ['ADMIN_MESSAGE_HOLD_APPLIED_SPAM_SIGNATURE_POLICY','ADMIN_MESSAGE_HOLD_APPLIED_SPAM_SIGNATURE_POLICY']
-				if event['reasonId'] not in IGNORED_REASON_IDS:
-					messageDetail = mc.getMessageDetail(event['id'])
-					if len(messageDetail["data"][0]["attachments"]) > 0:
-						for x in messageDetail["data"][0]["attachments"]:
-							IGNORE_CONTENT_TYPE = ['application/pdf', 'application/x-pkcs7-signature', 'application/gzip', 'application/x-rar-compressed']
-							if 'application' in x['contentType'] and x['contentType'] not in IGNORE_CONTENT_TYPE:
-								print 'Downloading %s with content-type %s' % (x['filename'], x['contentType'])
-								mc.downloadFile(x['id'], x['filename'])
-							else:
-								print 'Ignoring %s with content-type %s' % (x['filename'], x['contentType'])
-				else:
-					print 'Ignoring reasonId: %s' % event['reasonId']
-except:
-	for error in sys.exc_info():
-		print error
-finally:
-	mc.logout()
+for cur_msg in messagesInHoldQueue:
+    print('MSG: ' + cur_msg.reason_id)
+    if cur_msg.has_attachments:
+        print('Found message with attachments: ' + cur_msg.reason_id + ' - ' + str(cur_msg.date_received))
+        attachments = cur_msg.getAttachments()
+        if cur_msg.reason_id == ADMIN_MESSAGE_HOLD_APPLIED_ATTACHMENT_SANDBOX_FAILURE:
+            for cur_attachment in attachments:
+                if cur_attachment.content_type not in Mimecast.SAFE_CONTENT_TYPE:
+                    print('Saving potentially unsafe attachment as: ' + cur_attachment.filename)
+                    cur_attachment.save()
+                else:
+                    pass
+                    #print('Skipping attachment in SAFE_CONTENT_TYPE')

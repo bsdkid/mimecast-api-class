@@ -5,7 +5,8 @@ Provides a simple, basic class to the Mimecast API. Currently supports only a fe
 I wrote this because the only example I could find was a single monolithic script which used httplib and I wanted something a little cleaner and more extensible.
 
 ### Requirements
-The class file pretty much needs only the python **requests** module to function.  Everything else uses base python functions.
+* Python 3
+* Install requirements listed in requirements.txt via pip
 
 ### Mimecast.py
 Class file with a few simple methods.
@@ -15,3 +16,6 @@ A simple example showing use of the Class which downloads files from TTP automat
 
 ### TODO
 Yes I know it's ugly and needs additional work to be more useful... please feel free to contribute and grow.
+
+### Contributors
+Thanks to James Stephenson for helping to grow and improve the code base
