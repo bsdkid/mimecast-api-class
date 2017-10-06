@@ -229,6 +229,68 @@ class Mimecast:
         params = {'data': [{'id': m_id}]}
         return self._apiRequest(uri, params, True)
 
+    def createUser(self, emailAddress, name, password, accountCode, forcePasswordChange=True):
+        uri = '/api/user/create-user'
+
+        params = {'data': [{'emailAddress': emailAddress, 'password': password, 'accountCode': accountCode, 'forcePasswordChange': forcePasswordChange, 'name': name} ] }
+        return self._apiRequest(uri, params)
+
+
+    def getUserList(self, domain):
+        uri = '/api/user/get-internal-users'
+
+        user_list = []
+        pagination_next = None
+
+        while True:
+            if pagination_next == None:
+                params = {'meta': {'pagination': {'pageSize': 50}}, 'data': [{'domain': domain}]}
+            else:
+                params = {'meta': {'pagination': {'pageSize': 50, 'pageToken': pagination_next}}, 'data': [{'domain': domain}]}
+            api_response = self._apiRequest(uri, params)
+
+            for x in (api_response['data']):
+                user_list += [ User(self,y) for y in x['users'] ]
+
+            try:
+                pagination_next = api_response['meta']['pagination']['next']
+            except KeyError:
+                break
+
+        #print('Getting attributes...')
+        #for user in user_list:
+        #    print(user.emailAddress)
+        #    user.getUserAttributes()
+
+        return user_list
+
+    def getUserAttributes(self, emailAddress):
+        uri = '/api/user/get-attributes'
+
+        attributes = []
+        pagination_next = None
+
+        while True:
+            if pagination_next == None:
+                params = {'meta': {'pagination': {'pageSize': 50}}, 'data': [{'emailAddress': emailAddress}]}
+            else:
+                params = {'meta': {'pagination': {'pageSize': 50, 'pageToken': pagination_next}}, 'data': [{'emailAddress': emailAddress}]}
+            api_response = self._apiRequest(uri, params)
+            print(emailAddress, api_response)
+
+            if api_response != None:
+                for x in (api_response['data']):
+                    print( x )
+                    attributes += [ user.setAttribute(y) for y in x['users'] ]
+
+            try:
+                pagination_next = api_response['meta']['pagination']['next']
+            except KeyError:
+                break
+
+        return
+
+
 class RollingHoldList:
     
     def __init__(self, mimecast, window_minutes = 30, poll_minutes = 5, poll = True):
@@ -322,4 +384,21 @@ class MessageAttachment:
             path = self.filename
         with open(path, "wb") as fout:
             fout.write(self.download())
-        
+
+class User:
+
+    ''' Message object returned by getUserList '''
+
+    def __init__(self, mimecast, user):
+
+        self._mimecast = mimecast
+        self._raw_user = user
+        self.emailAddress = self._raw_user['emailAddress']
+        self.addressType = self._raw_user['addressType']
+        self.alias = self._raw_user['alias']
+        self.userAttributes = None
+
+    def getUserAttributes(self):
+        if self.userAttributes == None:
+            self.userAttributes = self._mimecast.getUserAttributes(self.emailAddress)
+
